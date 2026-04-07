@@ -1,103 +1,71 @@
 import streamlit as st
 import urllib.parse
 
-# --- НЕГИЗГИ ЖӨНӨТҮҮЛӨР ---
-MY_PHONE = "996221109756"  # Сенин WhatsApp номериң
-MY_MBANK = "221468504"     # Сенин М-Банк номериң
-ADMIN_PASSWORD = "777"     
+# --- ЖӨНӨТҮҮЛӨР ---
+MY_PHONE = "996221109756"
+MY_MBANK = "221468504"
+ADMIN_PASSWORD = "777"
 CAFE_NAME = "🌸 АСАЛГҮЛ 🌸"
 
-# --- МААЛЫМАТТАРДЫ САКТОО ---
-if 'is_open' not in st.session_state:
-    st.session_state.is_open = True
-if 'menu_items' not in st.session_state:
-    st.session_state.menu_items = {
-        "🍲 Плов": 220,
-        "🍜 Лагман": 190,
-        "🥟 Манты": 200,
-        "🥗 Шакарөп": 50,
-        "☕ Чай": 30
-    }
-
-# --- САЙТТЫН ТҮЗҮЛҮШҮ ---
+# Дизайн
 st.set_page_config(page_title=CAFE_NAME, page_icon="🌸")
 
-# --- САТУУЧУ ҮЧҮН ПАНЕЛЬ ---
+# Меню маалыматтары (Сүрөттөрдүн шилтемеси менен)
+if 'menu_items' not in st.session_state:
+    st.session_state.menu_items = {
+        "🍲 Плов": {"баасы": 220, "сүрөт": "https://images.unsplash.com/photo-1626305716186-09859f515024?w=500"},
+        "🍜 Лагман": {"баасы": 190, "сүрөт": "https://images.unsplash.com/photo-1512058560366-cd242955a732?w=500"},
+        "🥟 Манты": {"баасы": 200, "сүрөт": "https://images.unsplash.com/photo-1534422298391-e4f8c170db76?w=500"},
+        "🥗 Шакарөп": {"баасы": 50, "сүрөт": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500"},
+        "☕ Чай": {"баасы": 30, "сүрөт": "https://images.unsplash.com/photo-1544787210-2213d84ad960?w=500"}
+    }
+if 'is_open' not in st.session_state:
+    st.session_state.is_open = True
+
+# --- НЕГИЗГИ БЕТ ---
+st.markdown(f"<h1 style='text-align: center;'>{CAFE_NAME}</h1>", unsafe_allow_html=True)
+
 with st.sidebar:
-    st.header("⚙️ Башкаруу")
+    st.header("⚙️ Админ")
     pwd = st.text_input("Пароль:", type="password")
     if pwd == ADMIN_PASSWORD:
-        st.success("Админ кирди")
-        st.session_state.is_open = st.toggle("Кафе ачык", value=st.session_state.is_open)
-        
-        st.subheader("➕ Тамак кошуу")
-        n = st.text_input("Аты:")
-        p = st.number_input("Баасы:", min_value=0)
-        if st.button("Кошуу"):
-            st.session_state.menu_items[n] = p
-            st.rerun()
-    else:
-        st.info("Бул бөлүм сатуучу үчүн.")
-
-# --- КАРДАРЛАР ҮЧҮН БЕТ ---
-st.title(f"{CAFE_NAME} Кафеси")
+        st.session_state.is_open = st.toggle("Кафе иштеп жатат", value=st.session_state.is_open)
 
 if not st.session_state.is_open:
-    st.error("🛑 КЕЧИРИҢИЗ, КАФЕ БҮГҮН ИШТЕБЕЙТ!")
+    st.error("🛑 КЕЧИРИҢИЗ, КАФЕ ЖАБЫК")
 else:
-    st.success("✅ Биз ачыкпыз! Төмөндөн тамак тандаңыз:")
-    
+    st.success("✅ Биз ачыкпыз! Заказ бериңиз:")
+
     selected_orders = {}
-    total_price = 0
-    
-    # Меню
-    for dish, price in st.session_state.menu_items.items():
-        col1, col2 = st.columns([3, 1])
+    total = 0
+
+    for dish, info in st.session_state.menu_items.items():
+        col1, col2 = st.columns([1, 2])
         with col1:
-            st.write(f"**{dish}** — {price} сом")
+            st.image(info["сүрөт"], use_container_width=True)
         with col2:
+            st.write(f"### {dish}")
+            st.write(f"Баасы: {info['баасы']} сом")
             qty = st.number_input("Саны:", min_value=0, key=f"qty_{dish}")
             if qty > 0:
                 selected_orders[dish] = qty
-                total_price += price * qty
+                total += info["баасы"] * qty
+        st.divider()
 
-    st.divider()
-    
-    # Заказ маалыматы
-    order_type = st.radio("Кайда отурасыз?", ("Кафеде (Столдо)", "Үйгө жеткирүү"))
-    location = st.text_input("Столдун номери же Дарегиңиз:")
-
-    if total_price > 0:
-        st.write(f"### Жалпы сумма: **{total_price} сом**")
+    if total > 0:
+        st.info(f"💰 Жалпы: {total} сом | 💳 М-Банк: {MY_MBANK}")
+        loc = st.text_input("📍 Стол же Дарек:")
         
-        # М-Банк маалыматын көрсөтүү
-        st.info(f"💳 **Төлөм үчүн М-Банк номери:** `{MY_MBANK}`")
-        
-        # WhatsApp текст
-        order_details = "".join([f"- {item}: {q} даана\n" for item, q in selected_orders.items()])
-        final_message = (
-            f"🌸 *ЖАҢЫ ЗАКАЗ - {CAFE_NAME}*\n"
-            f"---------------------------\n"
-            f"{order_details}"
-            f"---------------------------\n"
-            f"💰 *Сумма:* {total_price} сом\n"
-            f"📍 *Жайы:* {order_type}\n"
-            f"🏠 *Дарек/Стол:* {location}\n"
-            f"💳 *Төлөм:* М-Банк ({MY_MBANK})"
-        )
-        
-        encoded_msg = urllib.parse.quote(final_message)
-        wa_url = f"https://wa.me/{MY_PHONE}?text={encoded_msg}"
-        
-        if st.button("🚀 ЗАКАЗДЫ ЖӨНӨТҮҮ"):
-            if not location:
-                st.warning("Сураныч, столду же даректи жазыңыз!")
+        if st.button("🚀 WHATSAPP-КА ЖӨНӨТҮҮ"):
+            if loc:
+                order_list = "".join([f"- {d}: {q}\n" for d, q in selected_orders.items()])
+                msg = f"🌸 ЗАКАЗ: {CAFE_NAME}\n{order_list}Сумма: {total}\nЖайы: {loc}"
+                url = f"https://wa.me/{MY_PHONE}?text={urllib.parse.quote(msg)}"
+                st.markdown(f'[✅ ЖӨНӨТҮҮНҮ ЫРАСТОО]({url})')
             else:
-                st.markdown(f'''
-                    <a href="{wa_url}" target="_blank" style="text-decoration:none;">
-                        <div style="background-color:#25D366; color:white; padding:15px; border-radius:10px; text-align:center; font-weight:bold;">
-                            📲 WHATSAPP-ТАН ЫРАСТОО
-                        </div>
-                    </a>
-                ''', unsafe_allow_html=True)
+                st.warning("Даректи жазыңыз!")
+
+
+        
+     
                 
