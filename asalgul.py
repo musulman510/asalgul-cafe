@@ -1,71 +1,76 @@
 import streamlit as st
 import urllib.parse
 
-# --- ЖӨНӨТҮҮЛӨР ---
+# --- НЕГИЗГИ МААЛЫМАТТАР ---
 MY_PHONE = "996221109756"
 MY_MBANK = "221468504"
 ADMIN_PASSWORD = "777"
 CAFE_NAME = "🌸 АСАЛГҮЛ 🌸"
 
-# Дизайн
 st.set_page_config(page_title=CAFE_NAME, page_icon="🌸")
 
-# Меню маалыматтары (Сүрөттөрдүн шилтемеси менен)
+# Меню (Сүрөттөрдүн жаңы шилтемелери менен)
 if 'menu_items' not in st.session_state:
     st.session_state.menu_items = {
-        "🍲 Плов": {"баасы": 220, "сүрөт": "https://images.unsplash.com/photo-1626305716186-09859f515024?w=500"},
-        "🍜 Лагман": {"баасы": 190, "сүрөт": "https://images.unsplash.com/photo-1512058560366-cd242955a732?w=500"},
-        "🥟 Манты": {"баасы": 200, "сүрөт": "https://images.unsplash.com/photo-1534422298391-e4f8c170db76?w=500"},
-        "🥗 Шакарөп": {"баасы": 50, "сүрөт": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500"},
-        "☕ Чай": {"баасы": 30, "сүрөт": "https://images.unsplash.com/photo-1544787210-2213d84ad960?w=500"}
+        "🍲 Плов": {"баасы": 220, "сүрөт": "https://img.freepik.com/free-photo/uzbek-pilaf-with-lamb_127032-2114.jpg?w=740"},
+        "🍜 Лагман": {"баасы": 190, "сүрөт": "https://img.freepik.com/free-photo/asian-soup-with-noodles-meat-vegetables_127032-1555.jpg?w=740"},
+        "🥟 Манты": {"баасы": 200, "сүрөт": "https://img.freepik.com/free-photo/traditional-central-asian-food-manti_127032-2633.jpg?w=740"},
+        "🥗 Шакарөп": {"баасы": 50, "сүрөт": "https://img.freepik.com/free-photo/salad-with-tomatoes-onions_127032-1845.jpg?w=740"},
+        "☕ Чай": {"баасы": 30, "сүрөт": "https://img.freepik.com/free-photo/cup-tea-with-mint-lemon_127032-2050.jpg?w=740"}
     }
-if 'is_open' not in st.session_state:
-    st.session_state.is_open = True
 
-# --- НЕГИЗГИ БЕТ ---
-st.markdown(f"<h1 style='text-align: center;'>{CAFE_NAME}</h1>", unsafe_allow_html=True)
+# --- САЙТТЫН КӨРҮНҮШҮ ---
+st.markdown(f"<h1 style='text-align: center; color: #D81B60;'>{CAFE_NAME}</h1>", unsafe_allow_html=True)
+st.write("---")
 
+# Админ бөлүмү
 with st.sidebar:
-    st.header("⚙️ Админ")
-    pwd = st.text_input("Пароль:", type="password")
-    if pwd == ADMIN_PASSWORD:
-        st.session_state.is_open = st.toggle("Кафе иштеп жатат", value=st.session_state.is_open)
+    st.header("⚙️ Башкаруу")
+    pass_input = st.text_input("Пароль:", type="password")
+    if pass_input == ADMIN_PASSWORD:
+        st.success("Админ кирди")
 
-if not st.session_state.is_open:
-    st.error("🛑 КЕЧИРИҢИЗ, КАФЕ ЖАБЫК")
-else:
-    st.success("✅ Биз ачыкпыз! Заказ бериңиз:")
+# Менюну чыгаруу
+selected_orders = {}
+total_sum = 0
 
-    selected_orders = {}
-    total = 0
-
-    for dish, info in st.session_state.menu_items.items():
-        col1, col2 = st.columns([1, 2])
-        with col1:
-            st.image(info["сүрөт"], use_container_width=True)
-        with col2:
-            st.write(f"### {dish}")
-            st.write(f"Баасы: {info['баасы']} сом")
-            qty = st.number_input("Саны:", min_value=0, key=f"qty_{dish}")
-            if qty > 0:
-                selected_orders[dish] = qty
-                total += info["баасы"] * qty
-        st.divider()
-
-    if total > 0:
-        st.info(f"💰 Жалпы: {total} сом | 💳 М-Банк: {MY_MBANK}")
-        loc = st.text_input("📍 Стол же Дарек:")
+for dish, info in st.session_state.menu_items.items():
+    col1, col2 = st.columns([1.5, 2])
+    
+    with col1:
+        # Сүрөттү жүктөөдө ката кетсе, текст чыгат
+        st.image(info["сүрөт"], use_container_width=True, caption=dish)
         
-        if st.button("🚀 WHATSAPP-КА ЖӨНӨТҮҮ"):
-            if loc:
-                order_list = "".join([f"- {d}: {q}\n" for d, q in selected_orders.items()])
-                msg = f"🌸 ЗАКАЗ: {CAFE_NAME}\n{order_list}Сумма: {total}\nЖайы: {loc}"
-                url = f"https://wa.me/{MY_PHONE}?text={urllib.parse.quote(msg)}"
-                st.markdown(f'[✅ ЖӨНӨТҮҮНҮ ЫРАСТОО]({url})')
-            else:
-                st.warning("Даректи жазыңыз!")
+    with col2:
+        st.subheader(dish)
+        st.write(f"**Баасы:** {info['баасы']} сом")
+        count = st.number_input("Саны:", min_value=0, key=f"cnt_{dish}")
+        if count > 0:
+            selected_orders[dish] = count
+            total_sum += info["баасы"] * count
+    st.write("---")
 
-
-        
-     
-                
+# Төлөм жана Жөнөтүү
+if total_sum > 0:
+    st.write(f"### 💰 Жалпы сумма: **{total_sum} сом**")
+    st.info(f"💳 М-Банк номерибиз: **{MY_MBANK}**")
+    
+    location = st.text_input("📍 Дарегиңизди же столдун номерин жазыңыз:")
+    
+    if st.button("🚀 ЗАКАЗДЫ WHATSAPP-КА ЖӨНӨТҮҮ"):
+        if location:
+            items_text = "".join([f"• {d}: {c} даана\n" for d, c in selected_orders.items()])
+            final_msg = f"🌸 *ЗАКАЗ: {CAFE_NAME}*\n\n{items_text}\n💰 *Сумма:* {total_sum} сом\n📍 *Жайы:* {location}\n💳 Төлөм: М-Банк аркылуу"
+            
+            encoded_msg = urllib.parse.quote(final_msg)
+            url = f"https://wa.me/{MY_PHONE}?text={encoded_msg}"
+            
+            st.markdown(f'''
+                <a href="{url}" target="_blank" style="text-decoration:none;">
+                    <div style="background-color:#25D366; color:white; padding:15px; border-radius:10px; text-align:center; font-weight:bold;">
+                        ✅ ЖӨНӨТҮҮНҮ ЫРАСТОО
+                    </div>
+                </a>
+            ''', unsafe_allow_html=True)
+        else:
+            st.error("Сураныч, дарегиңизди жазыңыз!")
